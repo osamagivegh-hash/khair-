@@ -58,7 +58,7 @@ temp
 
 # TypeScript
 *.tsbuildinfo
-next-env.d.ts
+# Note: next-env.d.ts will be generated during build, so it's OK to ignore
 
 # Documentation (optional - remove if you want to include)
 # README.md
