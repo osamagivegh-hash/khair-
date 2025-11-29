@@ -58,4 +58,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8080) + '/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}).on('error', () => process.exit(1))" || exit 1
 
 # Start the application
-CMD ["sh", "-c", "mkdir -p /data && chmod 777 /data && npx prisma migrate deploy || true && npm start"]
+# Ensure PORT is set (Cloud Run sets this automatically)
+# Next.js 16 automatically uses PORT env var, but we'll be explicit
+CMD ["sh", "-c", "mkdir -p /data && chmod 777 /data && npx prisma migrate deploy || true && PORT=${PORT:-8080} npm start"]
