@@ -36,10 +36,17 @@ export default function ProgramsManager() {
   const fetchPrograms = async () => {
     try {
       const response = await fetch('/api/admin/programs')
+      if (!response.ok) {
+        console.error('Failed to fetch programs:', response.status, response.statusText)
+        setPrograms([])
+        return
+      }
       const data = await response.json()
-      setPrograms(data)
+      // Ensure data is an array
+      setPrograms(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch programs:', error)
+      setPrograms([])
     } finally {
       setLoading(false)
     }

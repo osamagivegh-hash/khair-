@@ -32,10 +32,17 @@ export default function SlidesManager() {
   const fetchSlides = async () => {
     try {
       const response = await fetch('/api/admin/slides')
+      if (!response.ok) {
+        console.error('Failed to fetch slides:', response.status, response.statusText)
+        setSlides([])
+        return
+      }
       const data = await response.json()
-      setSlides(data)
+      // Ensure data is an array
+      setSlides(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch slides:', error)
+      setSlides([])
     } finally {
       setLoading(false)
     }

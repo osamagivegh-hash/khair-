@@ -31,9 +31,11 @@ export default function NewsManager() {
     try {
       const response = await fetch('/api/admin/news')
       const data = await response.json()
-      setNews(data)
+      // Ensure data is always an array
+      setNews(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Failed to fetch news:', error)
+      setNews([])
     } finally {
       setLoading(false)
     }
