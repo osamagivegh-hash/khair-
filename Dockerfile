@@ -19,7 +19,7 @@ COPY prisma ./prisma
 
 # Install all dependencies (needed for build)
 # The postinstall script will run prisma generate automatically
-RUN npm ci || npm install
+RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 RUN npm cache clean --force
 
 # Copy all application files (respects .dockerignore)
