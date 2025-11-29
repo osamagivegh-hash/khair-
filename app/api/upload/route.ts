@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadImage } from '@/lib/cloudinary';
+import { handleOptions, withCors } from '@/lib/cors';
+
+// Handle OPTIONS preflight request
+export async function OPTIONS(request: NextRequest) {
+  return handleOptions(request);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,13 +22,14 @@ export async function POST(request: NextRequest) {
 
     if (!cloudName || !apiKey || !apiSecret) {
       console.error('Missing Cloudinary configuration');
-      return NextResponse.json(
+      const response = NextResponse.json(
         {
           success: false,
           error: 'Cloudinary configuration is missing. Please check environment variables.'
         },
         { status: 500 }
       );
+      return withCors(response, request);
     }
 
     const formData = await request.formData();
@@ -38,28 +45,31 @@ export async function POST(request: NextRequest) {
     });
 
     if (!file) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { success: false, error: 'No file provided' },
         { status: 400 }
       );
+      return withCors(response, request);
     }
 
     // Validate file type
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { success: false, error: 'Invalid file type. Only images are allowed.' },
         { status: 400 }
       );
+      return withCors(response, request);
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { success: false, error: 'File size exceeds 10MB limit' },
         { status: 400 }
       );
+      return withCors(response, request);
     }
 
     // Ensure Cloudinary is configured before upload
@@ -68,23 +78,26 @@ export async function POST(request: NextRequest) {
     
     if (!isConfigured) {
       console.error('[Upload] Cloudinary not configured, attempting to configure...');
-      return NextResponse.json(
+      const response = NextResponse.json(
         {
           success: false,
           error: 'Cloudinary is not properly configured. Please check environment variables.',
         },
         { status: 500 }
       );
+      return withCors(response, request);
     }
 
     console.log('Starting upload to Cloudinary...');
     const imageUrl = await uploadImage(file, folder);
     console.log('Upload successful:', imageUrl);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       url: imageUrl,
     });
+    
+    return withCors(response, request);
   } catch (error) {
     console.error('=== UPLOAD ERROR ===');
     console.error('Error type:', error?.constructor?.name);
@@ -99,7 +112,7 @@ export async function POST(request: NextRequest) {
     console.error('Full error object:', error);
     console.error('===================');
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         success: false,
         error: error instanceof Error ? error.message : 'Upload failed',
@@ -110,6 +123,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+    
+    return withCors(response, request);
   }
 }
 
