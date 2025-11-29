@@ -1,9 +1,9 @@
 # Use Node.js 20 LTS as base image
 FROM node:20-slim
 
-# Install SQLite and curl (for health checks)
+# Install curl (for health checks)
+# MongoDB connection is handled by Prisma, no need for local MongoDB installation
 RUN apt-get update && apt-get install -y \
-    sqlite3 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,15 +26,7 @@ RUN npm cache clean --force
 # This will copy: app/, components/, lib/, public/, config files, etc.
 COPY . .
 
-# Copy database sync scripts to system bin (if they exist)
-RUN if [ -f scripts/sync-db.sh ]; then \
-      cp scripts/sync-db.sh /usr/local/bin/sync-db.sh && \
-      chmod +x /usr/local/bin/sync-db.sh; \
-    fi
-RUN if [ -f scripts/backup-db.sh ]; then \
-      cp scripts/backup-db.sh /usr/local/bin/backup-db.sh && \
-      chmod +x /usr/local/bin/backup-db.sh; \
-    fi
+# MongoDB doesn't need local database sync scripts
 
 # Build the Next.js application
 RUN npm run build
@@ -43,8 +35,7 @@ RUN npm run build
 # Keep TypeScript and ts-node as Next.js needs them (TypeScript for config, ts-node for seeding)
 RUN npm install --save typescript ts-node && npm prune --production && npm cache clean --force
 
-# Create writable directory for SQLite database
-RUN mkdir -p /data && chmod 777 /data
+# MongoDB Atlas is cloud-hosted, no local database directory needed
 
 # Expose port (Cloud Run will set PORT env var)
 EXPOSE 8080
@@ -52,7 +43,7 @@ EXPOSE 8080
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=8080
-ENV DATABASE_URL="file:/data/dev.db"
+# DATABASE_URL will be set via Cloud Run environment variables
 
 # Health check (Cloud Run handles this automatically, but useful for local testing)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
@@ -61,5 +52,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 # Start the application
 # Ensure PORT is set (Cloud Run sets this automatically)
 # Next.js 16 automatically uses PORT env var, but we'll be explicit
+# MongoDB doesn't use Prisma migrations, so we skip migrate deploy
 # Auto-seed database if empty (only on first run)
-CMD ["sh", "-c", "mkdir -p /data && chmod 777 /data && npx prisma migrate deploy || true && (npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts || true) && PORT=${PORT:-8080} npm start"]
+CMD ["sh", "-c", "npx prisma db push || true && (npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts || true) && PORT=${PORT:-8080} npm start"]

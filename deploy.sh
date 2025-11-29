@@ -47,27 +47,8 @@ gcloud services enable cloudbuild.googleapis.com --quiet
 gcloud services enable run.googleapis.com --quiet
 gcloud services enable storage.googleapis.com --quiet
 
-# Create Cloud Storage bucket for database (if it doesn't exist)
-echo -e "${YELLOW}📦 Creating Cloud Storage bucket for database...${NC}"
-if ! gsutil ls -b "gs://${BUCKET_NAME}" &>/dev/null; then
-  gsutil mb -p "$PROJECT_ID" -l "$REGION" "gs://${BUCKET_NAME}"
-  echo -e "${GREEN}✅ Bucket created: gs://${BUCKET_NAME}${NC}"
-else
-  echo -e "${GREEN}✅ Bucket already exists: gs://${BUCKET_NAME}${NC}"
-fi
-
-# Upload initial database if it exists locally
-if [ -f "dev.db" ] || [ -f "prisma/dev.db" ]; then
-  echo -e "${YELLOW}📤 Uploading initial database to Cloud Storage...${NC}"
-  DB_FILE="dev.db"
-  if [ -f "prisma/dev.db" ]; then
-    DB_FILE="prisma/dev.db"
-  fi
-  gsutil cp "$DB_FILE" "gs://${BUCKET_NAME}/dev.db"
-  echo -e "${GREEN}✅ Database uploaded${NC}"
-else
-  echo -e "${YELLOW}⚠️  No local database found. A new database will be created on first run.${NC}"
-fi
+# MongoDB Atlas is used - no need for Cloud Storage bucket
+echo -e "${GREEN}✅ Using MongoDB Atlas (cloud-hosted database)${NC}"
 
 # Build Docker image
 echo -e "${YELLOW}🔨 Building Docker image...${NC}"
@@ -94,7 +75,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --min-instances 0 \
   --max-instances 10 \
   --timeout 300 \
-  --set-env-vars "DATABASE_URL=file:/data/dev.db,NODE_ENV=production,DB_BUCKET=${BUCKET_NAME}" \
+  --set-env-vars "DATABASE_URL=mongodb+srv://osamashaer66_db_user:990099@mawaddah.lh79hv8.mongodb.net/?appName=Mawaddah,NODE_ENV=production" \
   --quiet
 
 if [ $? -eq 0 ]; then

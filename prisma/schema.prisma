@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model News {
-  id         Int      @id @default(autoincrement())
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
   title      String
   content    String
   isBreaking Boolean  @default(false)
@@ -19,7 +19,7 @@ model News {
 }
 
 model Program {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   title        String
   description  String
   targetAmount Float
@@ -30,7 +30,7 @@ model Program {
 }
 
 model Slide {
-  id       Int    @id @default(autoincrement())
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
   title    String
   subtitle String
   imageUrl String
@@ -38,7 +38,7 @@ model Slide {
 }
 
 model Message {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   email     String
   subject   String
