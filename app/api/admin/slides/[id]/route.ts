@@ -4,14 +4,15 @@ import { prisma } from '@/lib/prisma';
 // Update a slide
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { title, subtitle, imageUrl, order } = body;
 
     const slide = await prisma.slide.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(title && { title }),
         ...(subtitle && { subtitle }),
@@ -32,11 +33,12 @@ export async function PUT(
 // Delete a slide
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await prisma.slide.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
