@@ -71,16 +71,27 @@ export async function POST(request: NextRequest) {
       url: imageUrl,
     });
   } catch (error) {
-    console.error('Upload error details:', {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      error,
-    });
+    console.error('=== UPLOAD ERROR ===');
+    console.error('Error type:', error?.constructor?.name);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+
+    // Log all error properties
+    if (error && typeof error === 'object') {
+      console.error('All error properties:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    }
+
+    console.error('Full error object:', error);
+    console.error('===================');
 
     return NextResponse.json(
       {
         success: false,
         error: error instanceof Error ? error.message : 'Upload failed',
+        details: process.env.NODE_ENV === 'development' ? {
+          type: error?.constructor?.name,
+          stack: error instanceof Error ? error.stack : undefined,
+        } : undefined,
       },
       { status: 500 }
     );
