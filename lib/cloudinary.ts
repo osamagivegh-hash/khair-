@@ -32,7 +32,7 @@ export async function uploadImage(file: File | Buffer, folder: string = 'al-khai
           folder,
           resource_type: 'auto',
         },
-        (error, result) => {
+        (error: any, result: any) => {
           if (error) {
             console.error('[Cloudinary] Upload failed:', error);
             reject(error);
@@ -55,7 +55,7 @@ export async function uploadImage(file: File | Buffer, folder: string = 'al-khai
 
 export async function deleteImage(publicId: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    cloudinary.uploader.destroy(publicId, (error) => {
+    cloudinary.uploader.destroy(publicId, (error: any) => {
       if (error) {
         reject(error);
       } else {

@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
           folder: folder,
           resource_type: 'auto',
         },
-        (error, result) => {
+        (error: any, result: any) => {
           if (error) {
             console.error('Cloudinary upload error:', error);
             reject(error);
