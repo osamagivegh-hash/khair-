@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { missingCloudinaryVars } from '@/lib/upload-config';
 
 export async function GET(request: NextRequest) {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -24,6 +25,8 @@ export async function GET(request: NextRequest) {
         CLOUDINARY_API_SECRET: hasApiSecret ? 'SET' : 'MISSING',
       },
       status: isCloudinaryConfigured ? '✅ Configured' : '❌ Not Configured',
+      missing: missingCloudinaryVars,
+      resolution: 'Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in the Cloud Run environment before redeploying.',
     },
     database: {
       configured: hasDatabase,
