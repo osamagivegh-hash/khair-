@@ -52,10 +52,23 @@ export default function ImageUpload({ onUploadComplete, currentImage, folder = '
         body: formData,
       })
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      const isJson = contentType?.includes('application/json')
+
+      if (!isJson) {
+        // Server returned HTML error page (build error)
+        console.error('Server returned HTML instead of JSON. Build might have failed.')
+        setError('خطأ في الخادم. الرجاء المحاولة لاحقاً')
+        setPreview(null)
+        return
+      }
+
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'فشل رفع الصورة')
+        console.error('Upload failed:', data)
+        setError(data.error || data.message || 'فشل رفع الصورة')
         setPreview(null)
         return
       }
@@ -68,7 +81,12 @@ export default function ImageUpload({ onUploadComplete, currentImage, folder = '
         setPreview(null)
       }
     } catch (err) {
-      setError('حدث خطأ أثناء رفع الصورة')
+      console.error('Upload error:', err)
+      if (err instanceof SyntaxError) {
+        setError('خطأ في الخادم: استجابة غير صحيحة');
+      } else {
+        setError('حدث خطأ أثناء رفع الصورة')
+      }
       setPreview(null)
     } finally {
       setUploading(false)
@@ -85,7 +103,7 @@ export default function ImageUpload({ onUploadComplete, currentImage, folder = '
       <label className="block text-sm font-medium text-gray-700 mb-2">
         الصورة
       </label>
-      
+
       {preview ? (
         <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-200">
           <Image
