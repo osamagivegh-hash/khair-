@@ -36,6 +36,11 @@ export function checkCloudinaryConfig(): boolean {
  * Check if Cloudinary is configured (module load time - for initial config)
  */
 const hasCloudinaryCredentials = !!cloudinaryCloudName && !!cloudinaryApiKey && !!cloudinaryApiSecret;
+const missingCloudinaryVars = [
+  !cloudinaryCloudName && 'CLOUDINARY_CLOUD_NAME',
+  !cloudinaryApiKey && 'CLOUDINARY_API_KEY',
+  !cloudinaryApiSecret && 'CLOUDINARY_API_SECRET',
+].filter(Boolean) as string[];
 
 const isCloudinaryConfigured =
   hasCloudinaryCredentials &&
@@ -111,6 +116,7 @@ export {
   MAX_FILE_SIZE,
   ALLOWED_FILE_TYPES,
   checkCloudinaryConfig,
+  missingCloudinaryVars,
 };
 
 export const cloudinaryConfig = isCloudinaryConfigured ? {

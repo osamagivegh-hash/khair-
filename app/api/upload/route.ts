@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadImage } from '@/lib/cloudinary';
-import { isCloudinaryConfigured, isValidFileType, isValidFileSize, cloudinaryFolder, MAX_FILE_SIZE } from '@/lib/upload-config';
+import { isCloudinaryConfigured, isValidFileType, isValidFileSize, cloudinaryFolder, MAX_FILE_SIZE, missingCloudinaryVars } from '@/lib/upload-config';
 import { handleOptions, withCors } from '@/lib/cors';
 
 // Handle OPTIONS preflight request
@@ -25,9 +25,11 @@ export async function POST(request: NextRequest) {
       const response = NextResponse.json(
         {
           success: false,
-          error: 'Cloudinary configuration is missing. Please check environment variables.'
+          error: 'Cloudinary environment variables are missing on the server.',
+          missingVariables: missingCloudinaryVars,
+          resolution: 'Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Cloud Run environment variables, then redeploy.',
         },
-        { status: 500 }
+        { status: 503 }
       );
       return withCors(response, request);
     }

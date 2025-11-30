@@ -54,6 +54,12 @@ export default function ImageUpload({ onUploadComplete, currentImage, folder = '
 
       const data = await response.json()
 
+      if (!response.ok) {
+        setError(data.error || 'فشل رفع الصورة')
+        setPreview(null)
+        return
+      }
+
       if (data.success) {
         setPreview(data.url)
         onUploadComplete(data.url)
