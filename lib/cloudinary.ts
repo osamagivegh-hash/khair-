@@ -1,5 +1,8 @@
-// Re-export from upload-config for backward compatibility
-export { cloudinary as default, isCloudinaryConfigured } from './upload-config';
+// Import cloudinary from upload-config
+import { cloudinary, isCloudinaryConfigured } from './upload-config';
+
+// Re-export for backward compatibility
+export { cloudinary as default, isCloudinaryConfigured };
 
 export async function uploadImage(file: File | Buffer, folder: string = 'al-khair'): Promise<string> {
   return new Promise(async (resolve, reject) => {
