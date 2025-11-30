@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 
-// Configure Cloudinary directly
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+// Helper to configure Cloudinary safely
+function configureCloudinary() {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+  const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+  const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
+
+  if (cloudName && apiKey && apiSecret) {
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret,
+      secure: true,
+    });
+    return true;
+  }
+  return false;
+}
 
 // CORS headers
 function setCorsHeaders(response: NextResponse) {
@@ -27,19 +37,23 @@ export async function POST(request: NextRequest) {
   try {
     console.log('=== UPLOAD REQUEST STARTED ===');
 
+    // Configure Cloudinary at runtime
+    const isConfigured = configureCloudinary();
+    
     // Check configuration
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+    const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+    const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
 
     console.log('Config check:', {
+      isConfigured,
       hasCloudName: !!cloudName,
       hasApiKey: !!apiKey,
       hasApiSecret: !!apiSecret,
       cloudName: cloudName ? `${cloudName.substring(0, 3)}***` : 'MISSING',
     });
 
-    if (!cloudName || !apiKey || !apiSecret) {
+    if (!isConfigured || !cloudName || !apiKey || !apiSecret) {
       console.error('ERROR: Missing Cloudinary credentials');
       const response = NextResponse.json(
         {
