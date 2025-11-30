@@ -31,7 +31,7 @@ export async function GET() {
         message: 'Cloudinary connection successful',
         cloudinary: {
           cloudName: cloudName,
-          apiKey: apiKey.substring(0, 3) + '***',
+          apiKey: apiKey ? apiKey.substring(0, 3) + '***' : 'MISSING',
           status: result.status === 'ok' ? 'Connected' : 'Unknown',
         },
       });
@@ -44,7 +44,7 @@ export async function GET() {
         name: error.name,
         details: {
           cloudName,
-          apiKey: apiKey.substring(0, 3) + '***',
+          apiKey: apiKey ? apiKey.substring(0, 3) + '***' : 'MISSING',
           hasApiSecret: !!apiSecret,
         },
       }, { status: 500 });
