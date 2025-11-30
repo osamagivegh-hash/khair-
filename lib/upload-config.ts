@@ -115,9 +115,10 @@ export {
   hasCloudinaryCredentials,
   MAX_FILE_SIZE,
   ALLOWED_FILE_TYPES,
-  checkCloudinaryConfig,
   missingCloudinaryVars,
 };
+
+// checkCloudinaryConfig is already exported above as a function declaration
 
 export const cloudinaryConfig = isCloudinaryConfigured ? {
   cloud_name: cloudinaryCloudName,
