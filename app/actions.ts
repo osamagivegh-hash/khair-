@@ -26,6 +26,18 @@ export async function getBreakingNews() {
     }
 }
 
+export async function getAllNews() {
+    try {
+        return await prisma.news.findMany({
+            orderBy: { createdAt: 'desc' },
+            take: 10, // Limit to latest 10 news items
+        })
+    } catch (error) {
+        console.error('Failed to fetch all news:', error)
+        return []
+    }
+}
+
 export async function getPrograms() {
     try {
         return await prisma.program.findMany({

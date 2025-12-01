@@ -1,27 +1,53 @@
-import { getBreakingNews, getPrograms, getSlides } from './actions'
+import { getBreakingNews, getPrograms, getSlides, getAllNews } from './actions'
 import Header from '@/components/ui/Header'
 import HeroSlider from '@/components/ui/HeroSlider'
 import ProgramCard from '@/components/ui/ProgramCard'
+import NewsCard from '@/components/ui/NewsCard'
 import ContactForm from '@/components/ui/ContactForm'
 import Footer from '@/components/ui/Footer'
+import NewsTicker from '@/components/ui/NewsTicker'
 import { HeartHandshake, Users, Globe } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const [slides, programs] = await Promise.all([
+  const [slides, programs, breakingNews, allNews] = await Promise.all([
     getSlides(),
     getPrograms(),
+    getBreakingNews(),
+    getAllNews(),
   ])
 
   return (
     <main className="min-h-screen bg-gray-50 font-sans">
       <Header />
 
+      {/* Breaking News Ticker */}
+      {breakingNews.length > 0 && <NewsTicker news={breakingNews} />}
+
       {/* Hero Section */}
       <section className="relative pt-[120px]">
         <HeroSlider slides={slides} />
       </section>
+
+      {/* News Section */}
+      {allNews.length > 0 && (
+        <section id="news" className="py-20 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <h2 className="text-primary font-bold text-lg mb-2">الأخبار</h2>
+              <h3 className="text-4xl font-bold text-gray-800 mb-4">آخر الأخبار</h3>
+              <div className="w-24 h-1 bg-secondary mx-auto rounded-full"></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {allNews.map((newsItem) => (
+                <NewsCard key={newsItem.id} news={newsItem} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Programs Section */}
       <section id="programs" className="py-20">
