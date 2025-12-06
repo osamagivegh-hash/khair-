@@ -204,3 +204,4 @@ Write-Host "  aws logs tail /ecs/al-khair-prod-app --follow --region $AWS_REGION
 Write-Host ""
 Write-Host "🎉 Happy deploying!" -ForegroundColor Cyan
 
+

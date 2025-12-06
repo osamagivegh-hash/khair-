@@ -26,3 +26,4 @@ applications:
         - CLOUDINARY_API_SECRET
         - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 
+

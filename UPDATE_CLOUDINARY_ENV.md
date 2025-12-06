@@ -82,3 +82,4 @@ CLOUDINARY_API_SECRET=j5iHrKcFMgoUZYDxRNMAFR5z0vM
 After updating, the service will automatically restart with the new environment variables. Wait 30-60 seconds for the service to be ready, then try uploading an image again.
 
 
+

@@ -189,3 +189,4 @@ echo "  aws logs tail /ecs/al-khair-prod-app --follow --region $AWS_REGION"
 echo ""
 echo "🎉 Happy deploying!"
 
+
