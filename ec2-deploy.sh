@@ -45,7 +45,7 @@ echo "   ✅ Frontend built"
 echo "8️⃣ Deploying frontend to backend..."
 cd ..
 mkdir -p backend/public
-cp -r frontend/build/* backend/public/
+cp -r frontend/dist/* backend/public/
 echo "   ✅ Frontend deployed"
 
 echo "9️⃣ Creating .env file..."
