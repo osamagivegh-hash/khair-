@@ -1,15 +1,60 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { requireSeedAuth } from '@/lib/auth';
+import { checkStrictRateLimit } from '@/lib/rate-limit';
 
-const prisma = new PrismaClient();
+/**
+ * Protected database seeding endpoint
+ * Requires SEED_SECRET_TOKEN for authorization
+ * 
+ * Usage:
+ * curl -X POST https://your-app.run.app/api/seed \
+ *   -H "Authorization: Bearer YOUR_SEED_SECRET_TOKEN"
+ */
+export async function POST(request: NextRequest) {
+  // Rate limit check (strict - 10 requests per minute)
+  const rateLimitError = checkStrictRateLimit(request);
+  if (rateLimitError) return rateLimitError;
 
-export async function POST() {
+  // Authentication check
+  const authError = requireSeedAuth(request);
+  if (authError) return authError;
+
   try {
-    // Clear existing data
-    await prisma.slide.deleteMany();
-    await prisma.program.deleteMany();
-    await prisma.news.deleteMany();
-    await prisma.message.deleteMany();
+    // Check if database already has data (prevent accidental re-seeding)
+    const existingSlides = await prisma.slide.count();
+    const existingPrograms = await prisma.program.count();
+    const existingNews = await prisma.news.count();
+
+    const hasExistingData = existingSlides > 0 || existingPrograms > 0 || existingNews > 0;
+
+    // Check for force parameter
+    const { searchParams } = new URL(request.url);
+    const force = searchParams.get('force') === 'true';
+
+    if (hasExistingData && !force) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Database already contains data',
+          message: 'Add ?force=true to URL to clear and re-seed',
+          existingRecords: {
+            slides: existingSlides,
+            programs: existingPrograms,
+            news: existingNews,
+          },
+        },
+        { status: 409 }
+      );
+    }
+
+    // Clear existing data if force=true or database is empty
+    if (force || !hasExistingData) {
+      await prisma.slide.deleteMany();
+      await prisma.program.deleteMany();
+      await prisma.news.deleteMany();
+      await prisma.message.deleteMany();
+    }
 
     // Seed Slides
     const slides = [
@@ -45,9 +90,8 @@ export async function POST() {
       },
     ];
 
-    for (const slide of slides) {
-      await prisma.slide.create({ data: slide });
-    }
+    // Use createMany for efficiency (single database operation)
+    await prisma.slide.createMany({ data: slides });
 
     // Seed Programs
     const programs = [
@@ -101,9 +145,7 @@ export async function POST() {
       },
     ];
 
-    for (const program of programs) {
-      await prisma.program.create({ data: program });
-    }
+    await prisma.program.createMany({ data: programs });
 
     // Seed News
     const newsItems = [
@@ -129,16 +171,16 @@ export async function POST() {
       },
     ];
 
-    for (const news of newsItems) {
-      await prisma.news.create({ data: news });
-    }
+    await prisma.news.createMany({ data: newsItems });
 
     return NextResponse.json({
       success: true,
       message: 'Database seeded successfully',
-      slides: slides.length,
-      programs: programs.length,
-      news: newsItems.length,
+      data: {
+        slides: slides.length,
+        programs: programs.length,
+        news: newsItems.length,
+      },
     });
   } catch (error) {
     console.error('Seeding failed:', error);
@@ -149,13 +191,13 @@ export async function POST() {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
-
-
-
-
-
+// Disable other methods
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Method not allowed. Use POST with Authorization header.' },
+    { status: 405 }
+  );
+}

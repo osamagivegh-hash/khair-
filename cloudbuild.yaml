@@ -1,5 +1,12 @@
 # Google Cloud Build configuration
 # Usage: gcloud builds submit --config=cloudbuild.yaml
+#
+# IMPORTANT: Before deploying, create secrets in Secret Manager:
+#   gcloud secrets create DATABASE_URL --data-file=-
+#   gcloud secrets create CLOUDINARY_API_KEY --data-file=-
+#   gcloud secrets create CLOUDINARY_API_SECRET --data-file=-
+#   gcloud secrets create ADMIN_PASSWORD --data-file=-
+#   gcloud secrets create SEED_SECRET_TOKEN --data-file=-
 
 steps:
   # Build the Docker image
@@ -23,28 +30,43 @@ steps:
       - 'gcr.io/$PROJECT_ID/al-khair'
     id: 'push-image'
 
-  # Deploy to Cloud Run
+  # Deploy to Cloud Run with secure configuration
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - 'khair-backend-autodeploy'  # Updated to match actual service name
+      - 'al-khair'
       - '--image'
       - 'gcr.io/$PROJECT_ID/al-khair:$COMMIT_SHA'
       - '--platform'
       - 'managed'
       - '--region'
-      - 'europe-west1'  # Updated to match actual region
+      - 'europe-west1'
       - '--allow-unauthenticated'
       - '--port'
       - '8080'
+      # Resource limits to prevent abuse detection
       - '--memory'
       - '512Mi'
       - '--cpu'
       - '1'
+      - '--max-instances'
+      - '3'
+      - '--min-instances'
+      - '0'
+      - '--concurrency'
+      - '80'
+      - '--timeout'
+      - '30s'
+      # CPU only allocated during request processing
+      - '--cpu-throttling'
+      # Use Secret Manager for sensitive values (create secrets first!)
+      - '--set-secrets'
+      - 'DATABASE_URL=DATABASE_URL:latest,CLOUDINARY_API_KEY=CLOUDINARY_API_KEY:latest,CLOUDINARY_API_SECRET=CLOUDINARY_API_SECRET:latest,ADMIN_PASSWORD=ADMIN_PASSWORD:latest,SEED_SECRET_TOKEN=SEED_SECRET_TOKEN:latest'
+      # Non-sensitive environment variables
       - '--set-env-vars'
-      - 'DATABASE_URL=mongodb+srv://osamashaer66_db_user:990099@mawaddah.lh79hv8.mongodb.net/?appName=Mawaddah,NODE_ENV=production,CLOUDINARY_CLOUD_NAME=dlsobyta0,CLOUDINARY_API_KEY=778583779232949,CLOUDINARY_API_SECRET=j5iHrKcFMgoUZYDxRNMAFR5z0vM'
+      - 'NODE_ENV=production,CLOUDINARY_CLOUD_NAME=dlsobyta0'
     id: 'deploy-cloud-run'
 
 images:
@@ -56,4 +78,3 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 timeout: '1200s'
-

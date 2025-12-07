@@ -2,7 +2,6 @@
 FROM node:20-slim
 
 # Install curl (for health checks)
-# MongoDB connection is handled by Prisma, no need for local MongoDB installation
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
@@ -13,45 +12,34 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Copy Prisma schema and migrations BEFORE npm install
-# (needed because postinstall script runs prisma generate)
+# Copy Prisma schema BEFORE npm install (needed for postinstall)
 COPY prisma ./prisma
 
-# Install all dependencies (needed for build)
-# The postinstall script will run prisma generate automatically
+# Install dependencies
 RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 RUN npm cache clean --force
 
-# Copy all application files (respects .dockerignore)
-# This will copy: app/, components/, lib/, public/, config files, etc.
+# Copy all application files
 COPY . .
-
-# MongoDB doesn't need local database sync scripts
 
 # Build the Next.js application
 RUN npm run build
 
 # Remove dev dependencies to reduce image size
-# Keep TypeScript and ts-node as Next.js needs them (TypeScript for config, ts-node for seeding)
-RUN npm install --save typescript ts-node && npm prune --production && npm cache clean --force
+RUN npm prune --production && npm cache clean --force
 
-# MongoDB Atlas is cloud-hosted, no local database directory needed
-
-# Expose port (Cloud Run will set PORT env var)
+# Expose port
 EXPOSE 8080
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=8080
-# DATABASE_URL will be set via Cloud Run environment variables
 
-# Health check (Cloud Run handles this automatically, but useful for local testing)
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8080) + '/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}).on('error', () => process.exit(1))" || exit 1
+# Health check with reasonable timeout
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-8080}/api/health || exit 1
 
-# Start the application
-# Ensure PORT is set (Cloud Run sets this automatically)
-# Next.js 16 automatically uses PORT env var, but we'll be explicit
-# MongoDB doesn't use Prisma migrations, use db push to sync schema
-# Auto-seed database if empty (only on first run)
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss || true && (npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts || true) && PORT=${PORT:-8080} npm start"]
+# IMPORTANT: Start WITHOUT seeding
+# Database seeding should be done ONCE via Cloud Run Jobs, NOT on every container startup
+# This prevents CPU spikes that look like crypto mining to Google's systems
+CMD ["sh", "-c", "PORT=${PORT:-8080} npm start"]
